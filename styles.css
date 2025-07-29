@@ -1,0 +1,156 @@
+/* GitHub Issues Navigator Styles */
+
+#github-nav-indicator {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #0969da;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  box-shadow: 0 8px 24px rgba(9, 105, 218, 0.12);
+  z-index: 10000;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  max-width: 300px;
+}
+
+#github-nav-indicator:hover {
+  opacity: 1;
+}
+
+#github-nav-indicator.active {
+  background: #28a745;
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+.nav-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.nav-title {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.nav-status {
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+.nav-counter {
+  font-weight: 600;
+  font-size: 12px;
+  color: #f0f6ff;
+}
+
+.nav-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.nav-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+#github-nav-notification {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1f2328;
+  color: #f0f6ff;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  box-shadow: 0 8px 24px rgba(31, 35, 40, 0.4);
+  z-index: 10001;
+  animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+  max-width: 400px;
+  text-align: center;
+}
+
+/* Simple fade transition effect */
+.nav-transition {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+/* Animations */
+@keyframes slideUp {
+  from {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Enhance issue links during navigation */
+.github-nav-active .js-issue-row:hover {
+  background-color: #f6f8fa;
+  transition: background-color 0.2s ease;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  #github-nav-indicator {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+  
+  .nav-content {
+    text-align: center;
+  }
+  
+  #github-nav-notification {
+    left: 10px;
+    right: 10px;
+    transform: none;
+    max-width: none;
+  }
+}

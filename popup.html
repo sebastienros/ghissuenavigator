@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 300px;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      margin: 0;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: 600;
+      color: #0969da;
+      margin-bottom: 8px;
+    }
+    
+    .subtitle {
+      color: #656d76;
+      font-size: 14px;
+    }
+    
+    .instructions {
+      background: #f6f8fa;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .instruction-item {
+      margin-bottom: 12px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    
+    .instruction-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .kbd {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 3px;
+      padding: 2px 6px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    
+    .status {
+      text-align: center;
+      padding: 12px;
+      background: #dbeafe;
+      border-radius: 6px;
+      color: #1e40af;
+      font-size: 12px;
+    }
+    
+    .github-link {
+      text-align: center;
+      margin-top: 16px;
+    }
+    
+    .github-link a {
+      color: #0969da;
+      text-decoration: none;
+      font-size: 12px;
+    }
+    
+    .github-link a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🔍 GitHub Navigator</div>
+    <div class="subtitle">Navigate issues with keyboard shortcuts</div>
+  </div>
+  
+  <div class="instructions">
+    <div class="instruction-item">
+      <strong>Start from First Issue:</strong><br>
+      <kbd>Ctrl</kbd> + <kbd>→</kbd>
+    </div>
+    
+    <div class="instruction-item">
+      <strong>Start from Last Issue:</strong><br>
+      <kbd>Ctrl</kbd> + <kbd>←</kbd>
+    </div>
+    
+    <div class="instruction-item">
+      <strong>Navigate Issues:</strong><br>
+      <kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>→</kbd>
+    </div>
+    
+    <div class="instruction-item">
+      <strong>Stop Navigation:</strong><br>
+      <kbd>Esc</kbd>
+    </div>
+  </div>
+  
+  <div class="status">
+    Navigate to any GitHub repository's issues or pull requests page, then press Ctrl+→ to start!
+  </div>
+  
+  <div class="github-link">
+    <a href="https://github.com" target="_blank">Open GitHub</a>
+  </div>
+</body>
+</html>
