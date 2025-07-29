@@ -4,11 +4,11 @@ A browser extension that allows you to navigate through GitHub issues and pull r
 
 ## Features
 
-- 🚀 **Quick Navigation**: Start with `Ctrl+→` (first issue) or `Ctrl+←` (last issue)
-- ⬅️➡️ **Arrow Key Navigation**: Continue using `Ctrl+←` and `Ctrl+→` to move between issues
+- 🚀 **Quick Navigation**: Start with `Alt+→` (first issue) or `Alt+←` (last issue)
+- ⬅️➡️ **Arrow Key Navigation**: Continue using `Alt+←` and `Alt+→` to move between issues
 - 🎨 **Visual Transitions**: Smooth sliding animations between issues
 - 📊 **Progress Indicator**: Always know your position in the issue list
-- 🔄 **Easy Exit**: Press `Esc` to return to the original page
+- 🔄 **Easy Exit**: Press `Alt+↑` to return to the original page
 - 📱 **Responsive Design**: Works on both desktop and mobile GitHub
 - 🔍 **Smart Filtering**: Works with GitHub's issue filters (labels, state, author, etc.)
 - 📄 **Auto-Pagination**: Automatically loads more issues when reaching the end of current page
@@ -23,13 +23,13 @@ A browser extension that allows you to navigate through GitHub issues and pull r
    - Works with filtered pages (e.g., `https://github.com/dotnet/aspnetcore/issues?q=is%3Aissue+state%3Aopen+label%3Aarea-middleware`)
 
 2. **Start Navigation**: 
-   - Press `Ctrl+→` to start from the first issue
-   - Press `Ctrl+←` to start from the last issue
+   - Press `Alt+→` to start from the first issue
+   - Press `Alt+←` to start from the last issue
 
 3. **Navigate Issues**:
-   - `Ctrl+→`: Go to next issue (automatically loads more when reaching end of page)
-   - `Ctrl+←`: Go to previous issue
-   - `Esc`: Stop navigation and return to list
+   - `Alt+→`: Go to next issue (automatically loads more when reaching end of page)
+   - `Alt+←`: Go to previous issue
+   - `Alt+↑`: Stop navigation and return to list
 
 4. **Visual Feedback**: 
    - A blue indicator appears in the top-right showing your progress
@@ -41,9 +41,9 @@ A browser extension that allows you to navigate through GitHub issues and pull r
 
 | Shortcut | Action |
 |----------|--------|
-| `Ctrl+→` | Start from first issue / Next issue |
-| `Ctrl+←` | Start from last issue / Previous issue |
-| `Esc` | Exit navigation mode |
+| `Alt+→` | Start from first issue / Next issue |
+| `Alt+←` | Start from last issue / Previous issue |
+| `Alt+↑` | Exit navigation mode |
 
 ## Installation (Development)
 
