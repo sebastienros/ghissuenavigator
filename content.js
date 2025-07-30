@@ -397,7 +397,9 @@ class GitHubIssuesNavigator {
       // Extract queryId from embedded data on the page
       const queryId = this.extractQueryIdFromPage();
       if (!queryId) {
-        throw new Error('Unable to find GraphQL queryId in page data');
+        // Fallback: Try to use GitHub's search API directly
+        console.log('GitHub Navigator: QueryId not found, trying direct search API approach...');
+        return await this.loadIssuesFromSearchAPI();
       }
 
       // Prepare GraphQL query payload following the expected format
@@ -477,6 +479,77 @@ class GitHubIssuesNavigator {
     }
   }
 
+  async loadIssuesFromSearchAPI() {
+    try {
+      const repoPath = this.getRepoPath();
+      const [owner, name] = repoPath.split('/');
+      const searchQuery = this.getSearchQuery();
+      
+      // Construct search query
+      let query;
+      if (searchQuery) {
+        query = searchQuery;
+      } else {
+        const isOnPullsPage = window.location.pathname.includes('/pulls');
+        const type = isOnPullsPage ? 'is:pull-request' : 'is:issue';
+        query = `repo:${owner}/${name} ${type} state:open sort:created-desc`;
+      }
+      
+      console.log('GitHub Navigator: Using search API with query:', query);
+      
+      // Use GitHub's search endpoint
+      const searchUrl = new URL('https://github.com/search');
+      searchUrl.searchParams.set('q', query);
+      searchUrl.searchParams.set('type', 'Issues');
+      searchUrl.searchParams.set('p', this.currentPage.toString());
+      
+      const response = await fetch(searchUrl.toString(), {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Search API HTTP ${response.status}`);
+      }
+
+      const html = await response.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, 'text/html');
+      
+      // Extract issue/PR links from search results
+      const issueLinks = doc.querySelectorAll('a[href*="/issues/"], a[href*="/pull/"]');
+      const newIssues = Array.from(issueLinks).map(link => {
+        const url = link.href;
+        const title = link.textContent.trim() || 'Untitled';
+        const numberMatch = url.match(/\/(?:issues|pull)\/(\d+)/);
+        const number = numberMatch ? parseInt(numberMatch[1]) : 0;
+        
+        return { url, title, number, state: 'open', labels: [] };
+      }).filter((issue, index, self) => 
+        issue.number > 0 && index === self.findIndex(i => i.url === issue.url)
+      );
+      
+      if (this.currentPage === 1) {
+        this.issues = newIssues;
+      } else {
+        this.issues.push(...newIssues);
+      }
+
+      this.hasMorePages = newIssues.length >= this.pageSize;
+      
+      console.log(`GitHub Navigator: Loaded ${newIssues.length} items via search API`);
+      
+      if (this.issues.length > 0) {
+        this.saveIssuesToStorage();
+      }
+      
+      return true;
+      
+    } catch (error) {
+      console.error('GitHub Navigator: Search API failed:', error);
+      throw error;
+    }
+  }
+
   getEndCursor() {
     // Only return endCursor for pagination (page 2+), null for first page
     return this.currentPage > 1 ? this.endCursor : null;
@@ -484,37 +557,40 @@ class GitHubIssuesNavigator {
 
   extractQueryIdFromPage() {
     try {
-      // Look for the embedded data script tag
-      const scriptTag = document.querySelector('script[data-target="react-app.embeddedData"]');
+      // Try to find embedded data script tag
+      const scriptTag = document.querySelector('script[data-target="react-app.embeddedData"]') ||
+                       document.querySelector('script[data-target="embeddedData"]');
+      
       if (!scriptTag) {
-        console.warn('GitHub Navigator: Could not find embedded data script tag');
+        console.log('GitHub Navigator: No embedded data script found, will use search API fallback');
         return null;
       }
 
       const embeddedData = JSON.parse(scriptTag.textContent);
-      const preloadedQueries = embeddedData.payload?.preloadedQueries;
+      const preloadedQueries = embeddedData.payload?.preloadedQueries || embeddedData.preloadedQueries;
       
       if (!preloadedQueries || !Array.isArray(preloadedQueries)) {
-        console.warn('GitHub Navigator: No preloadedQueries found in embedded data');
+        console.log('GitHub Navigator: No preloadedQueries found, will use search API fallback');
         return null;
       }
 
-      // Look for the IssueIndexPageQuery
-      const issueQuery = preloadedQueries.find(query => 
-        query.queryName === 'IssueIndexPageQuery' || 
-        query.queryName === 'PullRequestIndexPageQuery' ||
-        query.queryId // Fallback to any query with a queryId
+      // Look for issue/PR queries
+      const query = preloadedQueries.find(q => 
+        q.queryName === 'IssueIndexPageQuery' || 
+        q.queryName === 'PullRequestIndexPageQuery' ||
+        q.queryName?.includes('Issue') ||
+        q.queryName?.includes('Pull')
       );
 
-      if (!issueQuery || !issueQuery.queryId) {
-        console.warn('GitHub Navigator: Could not find queryId in preloaded queries');
-        return null;
+      if (query?.queryId) {
+        console.log('GitHub Navigator: Found queryId for GraphQL approach');
+        return query.queryId;
       }
 
-      console.log('GitHub Navigator: Extracted queryId:', issueQuery.queryId);
-      return issueQuery.queryId;
+      console.log('GitHub Navigator: No suitable query found, will use search API fallback');
+      return null;
     } catch (error) {
-      console.warn('GitHub Navigator: Error extracting queryId from page:', error);
+      console.log('GitHub Navigator: Error extracting queryId, will use search API fallback:', error.message);
       return null;
     }
   }
