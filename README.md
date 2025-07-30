@@ -12,7 +12,7 @@ A browser extension that allows you to navigate through GitHub issues and pull r
 - 📱 **Responsive Design**: Works on both desktop and mobile GitHub
 - 🔍 **Smart Filtering**: Works with GitHub's issue filters (labels, state, author, etc.)
 - 📄 **Auto-Pagination**: Automatically loads more issues when reaching the end of current page
-- ⚡ **GraphQL Powered**: Uses GitHub's GraphQL API for reliable and fast issue loading
+- ⚡ **REST API Powered**: Uses GitHub's Search REST API for reliable and fast issue loading
 - 💾 **State Persistence**: Maintains navigation position across page transitions
 
 ## How to Use

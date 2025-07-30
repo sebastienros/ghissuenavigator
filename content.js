@@ -205,7 +205,18 @@ class GitHubIssuesNavigator {
   getSearchQuery() {
     // Extract search query from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('q') || '';
+    let query = urlParams.get('q') || '';
+    
+    // If we have a query but it doesn't include repo: filter, add it
+    if (query) {
+      const repoPath = this.getRepoPath();
+      if (repoPath && !query.includes(`repo:${repoPath}`)) {
+        // Add repo filter to the beginning of the query
+        query = `repo:${repoPath} ${query}`;
+      }
+    }
+    
+    return query;
   }
 
   isOnListPage() {
@@ -360,10 +371,10 @@ class GitHubIssuesNavigator {
       this.visitedIssueNumbers.clear();
     }
 
-    await this.loadIssuesFromGraphQL();
+    await this.loadIssuesFromRestAPI();
   }
 
-  async loadIssuesFromGraphQL() {
+  async loadIssuesFromRestAPI() {
     if (this.isLoadingMore) return;
     this.isLoadingMore = true;
 
@@ -392,55 +403,24 @@ class GitHubIssuesNavigator {
       }
 
       console.log('GitHub Navigator: Searching with query:', query);
-      console.log('GitHub Navigator: GraphQL variables:', {
+      console.log('GitHub Navigator: REST API variables:', {
         query: query,
-        first: this.pageSize,
-        after: this.getEndCursor(),
-        currentPage: this.currentPage,
-        endCursor: this.endCursor
+        page: this.currentPage,
+        per_page: this.pageSize
       });
 
-      // Extract queryId from embedded data on the page
-      const queryId = this.extractQueryIdFromPage();
-      if (!queryId) {
-        throw new Error('Unable to find GraphQL queryId in page data');
-      }
-
-      // Prepare GraphQL query payload following the expected format
-      const [owner, name] = repoPath.split('/');
+      // Encode the query for URL
+      const encodedQuery = encodeURIComponent(query);
       
-      // Calculate skip: If we're navigating and on page 1, reset skip to current position
-      // Otherwise use standard pagination calculation
-      let skip;
-      if (this.currentPage === 1 && this.isNavigating && this.currentIndex >= 0) {
-        // Reset to current position when returning to list page during navigation
-        skip = Math.max(0, this.currentIndex - Math.floor(this.pageSize / 2));
-        console.log(`GitHub Navigator: Resetting skip to current position: ${skip} (currentIndex: ${this.currentIndex})`);
-      } else {
-        skip = (this.currentPage - 1) * this.pageSize;
-      }
-      
-      const graphqlPayload = {
-        query: queryId,
-        variables: {
-          includeReactions: false,
-          name: name,
-          owner: owner,
-          query: query,
-          skip: skip
-        }
-      };
+      // Build the REST API URL
+      const restUrl = `https://api.github.com/search/issues?q=${encodedQuery}&page=${this.currentPage}&per_page=${this.pageSize}`;
 
-      // URL encode the payload for the query parameter
-      const encodedBody = encodeURIComponent(JSON.stringify(graphqlPayload));
-      
-      const graphqlUrl = `https://github.com/_graphql?body=${encodedBody}`;
-
-      // Make the GraphQL request using GET
-      const response = await fetch(graphqlUrl, {
+      // Make the REST API request
+      const response = await fetch(restUrl, {
         method: 'GET',
         headers: {
-          'X-Requested-With': 'XMLHttpRequest'
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'GitHubIssuesNavigator/1.0'
         }
       });
 
@@ -450,20 +430,17 @@ class GitHubIssuesNavigator {
 
       const data = await response.json();
       
-      if (data.errors) {
-        throw new Error(`GraphQL errors: ${JSON.stringify(data.errors)}`);
+      if (data.message) {
+        throw new Error(`API Error: ${data.message}`);
       }
 
-      // Handle the new GraphQL response format
-      const searchResult = data.data.repository.search;
-      const newIssues = searchResult.edges.map(edge => ({
-        url: edge.node.__isIssueOrPullRequest === 'Issue' ? 
-          `https://github.com/${owner}/${name}/issues/${edge.node.number}` :
-          `https://github.com/${owner}/${name}/pull/${edge.node.number}`,
-        title: edge.node.title,
-        number: edge.node.number,
-        state: edge.node.state,
-        labels: edge.node.labels.edges.map(labelEdge => labelEdge.node?.name || '').filter(Boolean)
+      // Handle the REST API response format
+      const newIssues = data.items.map(item => ({
+        url: item.html_url,
+        title: item.title,
+        number: item.number,
+        state: item.state,
+        labels: item.labels.map(label => label.name)
       }));
 
       // If this is page 1, handle potential duplicates from existing navigation
@@ -510,29 +487,32 @@ class GitHubIssuesNavigator {
         console.log(`GitHub Navigator: Page ${this.currentPage}: filtered ${newIssues.length - filteredNewIssues.length} duplicate issues`);
         this.issues.push(...filteredNewIssues);
         
+        // Calculate if there are more pages based on total_count and current position
+        const totalPages = Math.ceil(data.total_count / this.pageSize);
+        this.hasMorePages = this.currentPage < totalPages;
+        
         // If we filtered out too many issues and don't have enough, try loading more
-        if (filteredNewIssues.length < Math.floor(this.pageSize / 2) && searchResult.pageInfo.hasNextPage) {
+        if (filteredNewIssues.length < Math.floor(this.pageSize / 2) && this.hasMorePages) {
           console.log('GitHub Navigator: Too many duplicates filtered, attempting to load more immediately');
           // Recursively load more to get sufficient unique issues
-          this.hasMorePages = searchResult.pageInfo.hasNextPage;
-          this.endCursor = searchResult.pageInfo.endCursor;
           if (this.hasMorePages) {
             this.currentPage++;
-            await this.loadIssuesFromGraphQL();
+            await this.loadIssuesFromRestAPI();
             return; // Exit early as the recursive call will handle the rest
           }
         }
       }
 
-      this.hasMorePages = searchResult.pageInfo.hasNextPage;
-      this.endCursor = searchResult.pageInfo.endCursor;
+      // Calculate if there are more pages based on total_count and current position
+      const totalPages = Math.ceil(data.total_count / this.pageSize);
+      this.hasMorePages = this.currentPage < totalPages;
 
       const finalIssueCount = this.currentPage === 1 ? 
         this.issues.length : 
         this.issues.length - (this.currentPage - 1) * this.pageSize;
 
-      console.log(`GitHub Navigator: Loaded ${newIssues.length} issues via GraphQL (page ${this.currentPage}, total: ${this.issues.length}, new: ${finalIssueCount})`);
-      console.log('GitHub Navigator: GraphQL issues preview:', this.issues.slice(0, 3).map((issue, idx) => ({
+      console.log(`GitHub Navigator: Loaded ${newIssues.length} issues via REST API (page ${this.currentPage}/${totalPages}, total: ${this.issues.length}, new: ${finalIssueCount})`);
+      console.log('GitHub Navigator: REST API issues preview:', this.issues.slice(0, 3).map((issue, idx) => ({
         index: idx,
         title: issue.title,
         url: issue.url
@@ -548,47 +528,7 @@ class GitHubIssuesNavigator {
     }
   }
 
-  getEndCursor() {
-    // Only return endCursor for pagination (page 2+), null for first page
-    return this.currentPage > 1 ? this.endCursor : null;
-  }
-
-  extractQueryIdFromPage() {
-    try {
-      // Look for the embedded data script tag
-      const scriptTag = document.querySelector('script[data-target="react-app.embeddedData"]');
-      if (!scriptTag) {
-        console.warn('GitHub Navigator: Could not find embedded data script tag');
-        return null;
-      }
-
-      const embeddedData = JSON.parse(scriptTag.textContent);
-      const preloadedQueries = embeddedData.payload?.preloadedQueries;
-      
-      if (!preloadedQueries || !Array.isArray(preloadedQueries)) {
-        console.warn('GitHub Navigator: No preloadedQueries found in embedded data');
-        return null;
-      }
-
-      // Look for the IssueIndexPageQuery
-      const issueQuery = preloadedQueries.find(query => 
-        query.queryName === 'IssueIndexPageQuery' || 
-        query.queryName === 'PullRequestIndexPageQuery' ||
-        query.queryId // Fallback to any query with a queryId
-      );
-
-      if (!issueQuery || !issueQuery.queryId) {
-        console.warn('GitHub Navigator: Could not find queryId in preloaded queries');
-        return null;
-      }
-
-      console.log('GitHub Navigator: Extracted queryId:', issueQuery.queryId);
-      return issueQuery.queryId;
-    } catch (error) {
-      console.warn('GitHub Navigator: Error extracting queryId from page:', error);
-      return null;
-    }
-  }
+  // getEndCursor method removed - no longer needed for REST API pagination
 
   async loadMoreIssues() {
     if (!this.hasMorePages || this.isLoadingMore) {
@@ -603,7 +543,7 @@ class GitHubIssuesNavigator {
     this.currentPage++;
     
     try {
-      await this.loadIssuesFromGraphQL();
+      await this.loadIssuesFromRestAPI();
       console.log(`GitHub Navigator: Successfully loaded more issues - total now: ${this.issues.length}`);
       return this.issues.length > 0;
     } catch (error) {
@@ -728,14 +668,14 @@ class GitHubIssuesNavigator {
       
       // If we didn't restore from storage or storage was invalid, load fresh issues
       if (!restored && this.isOnListPage()) {
-        console.log('GitHub Navigator: Loading issues for first time via GraphQL...');
+        console.log('GitHub Navigator: Loading issues for first time via REST API...');
         await this.loadIssues();
       }
     }
     
     // If still no issues and we're on a list page, try to load them
     if (this.issues.length === 0 && this.isOnListPage()) {
-      console.log('GitHub Navigator: No issues found, loading via GraphQL...');
+      console.log('GitHub Navigator: No issues found, loading via REST API...');
       await this.loadIssues();
     }
     
@@ -797,14 +737,14 @@ class GitHubIssuesNavigator {
       
       // If we didn't restore from storage or storage was invalid, load fresh issues
       if (!restored && this.isOnListPage()) {
-        console.log('GitHub Navigator: Loading issues for first time via GraphQL...');
+        console.log('GitHub Navigator: Loading issues for first time via REST API...');
         await this.loadIssues();
       }
     }
     
     // If still no issues and we're on a list page, try to load them
     if (this.issues.length === 0 && this.isOnListPage()) {
-      console.log('GitHub Navigator: No issues found, loading via GraphQL...');
+      console.log('GitHub Navigator: No issues found, loading via REST API...');
       await this.loadIssues();
     }
     
