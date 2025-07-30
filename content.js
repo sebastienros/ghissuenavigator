@@ -15,6 +15,7 @@ class GitHubIssuesNavigator {
     this.currentPage = 1;
     this.pageSize = 25; // GitHub's default page size
     this.isLoadingMore = false;
+    this.visitedIssueNumbers = new Set(); // Track issue numbers we've navigated through
     
     this.init();
   }
@@ -39,6 +40,7 @@ class GitHubIssuesNavigator {
       this.hasMorePages = true;
       this.currentPage = 1;
       this.endCursor = null;
+      this.visitedIssueNumbers.clear();
       // Show the navigation indicator with initial message
       this.createNavigationIndicator();
       this.updateIndicator(); // This will show the "Press Ctrl+→ or Ctrl+← to start navigation" message
@@ -94,7 +96,8 @@ class GitHubIssuesNavigator {
         hasMorePages: this.hasMorePages,
         currentPage: this.currentPage,
         searchQuery: this.getSearchQuery(),
-        endCursor: this.endCursor
+        endCursor: this.endCursor,
+        visitedIssueNumbers: Array.from(this.visitedIssueNumbers)
       };
       localStorage.setItem(this.storageKey, JSON.stringify(issuesData));
       console.log(`GitHub Navigator: Saved ${this.issues.length} issues to storage`);
@@ -151,6 +154,7 @@ class GitHubIssuesNavigator {
         this.hasMorePages = issuesData.hasMorePages || false;
         this.currentPage = issuesData.currentPage || 1;
         this.endCursor = issuesData.endCursor || null;
+        this.visitedIssueNumbers = new Set(issuesData.visitedIssueNumbers || []);
         
         // Restore navigation state if we were navigating
         if (issuesData.isNavigating && typeof issuesData.currentIndex === 'number' && issuesData.currentIndex >= 0) {
@@ -245,6 +249,7 @@ class GitHubIssuesNavigator {
           this.hasMorePages = true;
           this.currentPage = 1;
           this.endCursor = null;
+          this.visitedIssueNumbers.clear();
           // Show the navigation indicator with initial message
           this.createNavigationIndicator();
           this.updateIndicator(); // This will show the "Press Ctrl+→ or Ctrl+← to start navigation" message
@@ -352,6 +357,7 @@ class GitHubIssuesNavigator {
       this.issues = [];
       this.currentPage = 1;
       this.hasMorePages = true;
+      this.visitedIssueNumbers.clear();
     }
 
     await this.loadIssuesFromGraphQL();
@@ -402,7 +408,17 @@ class GitHubIssuesNavigator {
 
       // Prepare GraphQL query payload following the expected format
       const [owner, name] = repoPath.split('/');
-      const skip = (this.currentPage - 1) * this.pageSize; // Calculate skip based on current page
+      
+      // Calculate skip: If we're navigating and on page 1, reset skip to current position
+      // Otherwise use standard pagination calculation
+      let skip;
+      if (this.currentPage === 1 && this.isNavigating && this.currentIndex >= 0) {
+        // Reset to current position when returning to list page during navigation
+        skip = Math.max(0, this.currentIndex - Math.floor(this.pageSize / 2));
+        console.log(`GitHub Navigator: Resetting skip to current position: ${skip} (currentIndex: ${this.currentIndex})`);
+      } else {
+        skip = (this.currentPage - 1) * this.pageSize;
+      }
       
       const graphqlPayload = {
         query: queryId,
@@ -450,19 +466,74 @@ class GitHubIssuesNavigator {
         labels: edge.node.labels.edges.map(labelEdge => labelEdge.node?.name || '').filter(Boolean)
       }));
 
+      // If this is page 1, handle potential duplicates from existing navigation
       if (this.currentPage === 1) {
-        this.issues = newIssues;
+        // Get existing issue numbers to filter out duplicates
+        const existingNumbers = new Set(this.issues.map(issue => issue.number));
+        
+        // Filter out issues we've already seen
+        const filteredNewIssues = newIssues.filter(issue => !existingNumbers.has(issue.number));
+        
+        console.log(`GitHub Navigator: Filtered ${newIssues.length - filteredNewIssues.length} duplicate issues`);
+        
+        if (this.isNavigating && this.currentIndex >= 0) {
+          // We're returning to list page during navigation - merge intelligently
+          // Find where our current issue appears in the new results
+          const currentIssue = this.issues[this.currentIndex];
+          if (currentIssue) {
+            const currentIssueIndexInNew = newIssues.findIndex(issue => issue.number === currentIssue.number);
+            
+            if (currentIssueIndexInNew >= 0) {
+              // Current issue found in new results - update our arrays
+              this.issues = newIssues;
+              this.currentIndex = currentIssueIndexInNew;
+              console.log(`GitHub Navigator: Repositioned currentIndex to ${this.currentIndex} after page refresh`);
+            } else {
+              // Current issue not in new results - append new issues and adjust index
+              this.issues.push(...filteredNewIssues);
+              // currentIndex stays the same since we're appending
+              console.log(`GitHub Navigator: Current issue not in new results, appended ${filteredNewIssues.length} new issues`);
+            }
+          } else {
+            // No current issue, replace with new results
+            this.issues = newIssues;
+          }
+        } else {
+          // Not navigating, just replace
+          this.issues = newIssues;
+        }
       } else {
-        this.issues.push(...newIssues);
+        // For subsequent pages, filter out duplicates and append
+        const existingNumbers = new Set(this.issues.map(issue => issue.number));
+        const filteredNewIssues = newIssues.filter(issue => !existingNumbers.has(issue.number));
+        
+        console.log(`GitHub Navigator: Page ${this.currentPage}: filtered ${newIssues.length - filteredNewIssues.length} duplicate issues`);
+        this.issues.push(...filteredNewIssues);
+        
+        // If we filtered out too many issues and don't have enough, try loading more
+        if (filteredNewIssues.length < Math.floor(this.pageSize / 2) && searchResult.pageInfo.hasNextPage) {
+          console.log('GitHub Navigator: Too many duplicates filtered, attempting to load more immediately');
+          // Recursively load more to get sufficient unique issues
+          this.hasMorePages = searchResult.pageInfo.hasNextPage;
+          this.endCursor = searchResult.pageInfo.endCursor;
+          if (this.hasMorePages) {
+            this.currentPage++;
+            await this.loadIssuesFromGraphQL();
+            return; // Exit early as the recursive call will handle the rest
+          }
+        }
       }
 
       this.hasMorePages = searchResult.pageInfo.hasNextPage;
       this.endCursor = searchResult.pageInfo.endCursor;
-      this.endCursor = searchResult.pageInfo.endCursor;
 
-      console.log(`GitHub Navigator: Loaded ${newIssues.length} issues via GraphQL (page ${this.currentPage}, total: ${this.issues.length})`);
-      console.log('GitHub Navigator: GraphQL issues preview:', newIssues.slice(0, 3).map((issue, idx) => ({
-        index: this.currentPage === 1 ? idx : this.issues.length - newIssues.length + idx,
+      const finalIssueCount = this.currentPage === 1 ? 
+        this.issues.length : 
+        this.issues.length - (this.currentPage - 1) * this.pageSize;
+
+      console.log(`GitHub Navigator: Loaded ${newIssues.length} issues via GraphQL (page ${this.currentPage}, total: ${this.issues.length}, new: ${finalIssueCount})`);
+      console.log('GitHub Navigator: GraphQL issues preview:', this.issues.slice(0, 3).map((issue, idx) => ({
+        index: idx,
         title: issue.title,
         url: issue.url
       })));
@@ -679,6 +750,9 @@ class GitHubIssuesNavigator {
     }
     this.currentIndex = 0;
     
+    // Clear visited issues tracking when starting fresh navigation
+    this.visitedIssueNumbers.clear();
+    
     // Save state immediately after setting navigation state
     this.saveIssuesToStorage();
     
@@ -744,6 +818,9 @@ class GitHubIssuesNavigator {
       this.originalUrl = this.issues.length > 0 ? this.getOriginalListUrl() : window.location.href;
     }
     this.currentIndex = this.issues.length - 1;
+    
+    // Clear visited issues tracking when starting fresh navigation
+    this.visitedIssueNumbers.clear();
     
     // Save state immediately after setting navigation state
     this.saveIssuesToStorage();
@@ -947,6 +1024,9 @@ class GitHubIssuesNavigator {
       title: issue.title,
       url: issue.url
     });
+    
+    // Track that we've visited this issue
+    this.visitedIssueNumbers.add(issue.number);
     
     // Update indicator before navigating to show correct position
     this.updateIndicator();
