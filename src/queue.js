@@ -15,7 +15,10 @@
     let totalCount = data.totalCount ?? queue.totalCount;
     if (!data.items.length) {
       if (data.page > 1) totalPages = Math.min(totalPages ?? data.page - 1, data.page - 1);
-      else if (totalCount === null) totalCount = 0;
+      else {
+        totalPages = 1;
+        totalCount = 0;
+      }
     }
 
     let pageSize = queue.pageSize;

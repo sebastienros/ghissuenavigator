@@ -3,6 +3,10 @@
 (() => {
   const LIST_PATH = /^\/([^/]+)\/([^/]+)\/(issues|pulls)\/?$/;
   const ITEM_PATH = /^\/([^/]+)\/([^/]+)\/(issues|pull)\/(\d+)(?:\/.*)?$/;
+  const RESERVED_OWNERS = new Set([
+    'account', 'dashboard', 'enterprises', 'marketplace', 'organizations',
+    'orgs', 'settings', 'sponsors', 'teams', 'users',
+  ]);
 
   function parseRoute(href) {
     let url;
@@ -15,6 +19,7 @@
 
     const list = url.pathname.match(LIST_PATH);
     if (list) {
+      if (RESERVED_OWNERS.has(list[1].toLowerCase())) return { kind: 'other' };
       const params = new URLSearchParams(url.search);
       const page = Math.max(1, parseInt(params.get('page'), 10) || 1);
       params.delete('page');
@@ -30,8 +35,10 @@
 
     const item = url.pathname.match(ITEM_PATH);
     if (item) {
+      if (RESERVED_OWNERS.has(item[1].toLowerCase())) return { kind: 'other' };
       const repo = `${item[1]}/${item[2]}`.toLowerCase();
       const number = Number(item[4]);
+      if (!Number.isSafeInteger(number) || number < 1) return { kind: 'other' };
       return { kind: 'item', repo, number, key: `${repo}#${number}` };
     }
 

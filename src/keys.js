@@ -24,9 +24,12 @@
   function isEditable(target) {
     if (!target) return false;
     if (target.isContentEditable) return true;
-    if (target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return true;
-    if (target.tagName === 'INPUT') return TEXT_INPUT_TYPES.has(String(target.type || '').toLowerCase());
-    return typeof target.getAttribute === 'function' && TEXT_ROLES.has(target.getAttribute('role'));
+    const tag = String(target.tagName || '').toUpperCase();
+    if (tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    if (tag === 'INPUT') return TEXT_INPUT_TYPES.has(String(target.type || '').toLowerCase());
+    if (typeof target.getAttribute === 'function' && TEXT_ROLES.has(target.getAttribute('role'))) return true;
+    return typeof target.closest === 'function'
+      && Boolean(target.closest('[contenteditable="true"], [role="textbox"], [role="combobox"], [role="searchbox"]'));
   }
 
   const api = { keyAction, isEditable };

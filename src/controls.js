@@ -1,12 +1,19 @@
 'use strict';
 
 (() => {
+  const { parseRoute } = typeof module === 'object' ? require('./routes.js') : globalThis.GhNav;
+
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const ICONS = {
     prev: 'M10 3.5 5.5 8l4.5 4.5',
     next: 'M6 3.5 10.5 8 6 12.5',
     list: 'M6 3 2.5 6.5 6 10M2.5 6.5h7a4 4 0 0 1 4 4V13',
   };
+  const STEPS = new Set(['prev', 'next', 'list']);
+
+  function isSafeHref(url, expectedKind) {
+    return typeof url === 'string' && parseRoute(url).kind === expectedKind;
+  }
 
   function icon(doc, name) {
     const svg = doc.createElementNS(SVG_NS, 'svg');
@@ -29,7 +36,7 @@
     const a = doc.createElement('a');
     a.className = 'ghnav-btn';
     a.dataset.ghnavStep = dir;
-    if (target === null) {
+    if (target === null || (target.url && !isSafeHref(target.url, 'item'))) {
       a.setAttribute('role', 'link');
       a.setAttribute('aria-disabled', 'true');
       a.setAttribute('aria-label', `No ${word.toLowerCase()} ${model.noun} in this list`);
@@ -80,7 +87,8 @@
     if (!compact) {
       const back = doc.createElement('a');
       back.className = 'ghnav-btn ghnav-btn--invisible';
-      back.href = model.listHref;
+      if (isSafeHref(model.listHref, 'list')) back.href = model.listHref;
+      else back.setAttribute('aria-disabled', 'true');
       back.dataset.ghnavStep = 'list';
       back.title = 'Back to list (Alt+↑)';
       back.appendChild(icon(doc, 'list'));
@@ -103,20 +111,18 @@
 
   // The controls go in the row under an issue or pull request title, the one
   // that holds the state label ("Open", "Todo"...). Its depth above the label
-  // varies (for example, the label is a button when you can edit the issue),
-  // so walk up to the first horizontal flex row spanning the header. Hidden
-  // sticky headers have no width yet, so they use the first row that holds
-  // more than the label.
-  function rowFor(label, scope, compact) {
-    const scopeWidth = scope.getBoundingClientRect().width;
-    let fallback = null;
-    for (let node = label.parentElement; node && node !== scope; node = node.parentElement) {
+  // varies (for example, the label is a button when you can edit the issue, or
+  // grouped with the author on signed-in pull requests), so walk up to the
+  // outermost horizontal flex row before any vertical header stack.
+  function rowFor(label, boundary) {
+    let best = null;
+    for (let node = label.parentElement; node && node !== boundary; node = node.parentElement) {
       const style = getComputedStyle(node);
-      if (!style.display.includes('flex') || style.flexDirection.startsWith('column')) continue;
-      if (!fallback && node.children.length > 1) fallback = node;
-      if (!compact && scopeWidth > 0 && node.getBoundingClientRect().width >= scopeWidth * 0.9) return node;
+      if (style.flexDirection && style.flexDirection.startsWith('column')) break;
+      if (!style.display.includes('flex')) continue;
+      if (node.children.length > 1) best = node;
     }
-    return fallback;
+    return best;
   }
 
   function findHosts(doc) {
@@ -124,19 +130,24 @@
     for (const label of doc.querySelectorAll(STATE_LABELS)) {
       const scope = label.closest(HEADER_SCOPES);
       if (!scope) continue;
-      const compact = Boolean(label.closest(COMPACT_SCOPES));
-      const host = rowFor(label, scope, compact);
+      const compactScope = label.closest(COMPACT_SCOPES);
+      const host = rowFor(label, compactScope || scope);
       if (!host || hosts.some((h) => h.host === host)) continue;
-      hosts.push({ host, compact });
+      hosts.push({ host, compact: Boolean(compactScope) });
     }
     return hosts;
   }
 
   // Swaps in an updated bar without losing keyboard focus inside it.
   function replaceBar(doc, existing, bar) {
-    const focused = existing.contains(doc.activeElement) ? doc.activeElement.dataset.ghnavStep : null;
+    const active = doc.activeElement && existing.contains(doc.activeElement)
+      ? (typeof doc.activeElement.closest === 'function'
+        ? doc.activeElement.closest('[data-ghnav-step]')
+        : doc.activeElement)
+      : null;
+    const focused = active && active.dataset ? active.dataset.ghnavStep : null;
     existing.replaceWith(bar);
-    if (focused) {
+    if (focused && STEPS.has(focused)) {
       const target = bar.querySelector(`[data-ghnav-step="${focused}"]`);
       if (target) target.focus({ preventScroll: true });
     }
@@ -182,11 +193,29 @@
     return hasPrimary || allowFloating;
   }
 
-  function unmount(doc) {
-    for (const bar of doc.querySelectorAll('.ghnav-bar')) bar.remove();
+  let toastTimer = null;
+  let toastFrame = null;
+
+  function clearToast(doc) {
+    if (toastFrame !== null) {
+      if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(toastFrame);
+      else clearTimeout(toastFrame);
+    }
+    toastFrame = null;
+    clearTimeout(toastTimer);
+    toastTimer = null;
+    const toast = doc.getElementById('ghnav-toast');
+    if (toast) {
+      toast.classList.remove('ghnav-toast--visible');
+      toast.textContent = '';
+    }
   }
 
-  let toastTimer = null;
+  function unmount(doc) {
+    for (const bar of doc.querySelectorAll('.ghnav-bar')) bar.remove();
+    clearToast(doc);
+  }
+
   function announce(doc, message) {
     let toast = doc.getElementById('ghnav-toast');
     if (!toast) {
@@ -197,17 +226,24 @@
     }
     // Change the text after the live region exists and is empty, so screen
     // readers announce it, including when the same message repeats.
-    toast.textContent = '';
-    clearTimeout(toastTimer);
-    requestAnimationFrame(() => {
+    clearToast(doc);
+    const schedule = typeof requestAnimationFrame === 'function'
+      ? requestAnimationFrame
+      : (cb) => setTimeout(cb, 0);
+    toastFrame = schedule(() => {
+      toastFrame = null;
       toast.textContent = message;
       toast.classList.add('ghnav-toast--visible');
       toastTimer = setTimeout(() => {
+        toastTimer = null;
         toast.classList.remove('ghnav-toast--visible');
         toast.textContent = '';
       }, 3000);
+      if (toastTimer && typeof toastTimer.unref === 'function') toastTimer.unref();
     });
   }
 
-  globalThis.GhNav = Object.assign(globalThis.GhNav || {}, { mount, unmount, announce });
+  const api = { buildBar, findHosts, mount, unmount, announce };
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else globalThis.GhNav = Object.assign(globalThis.GhNav || {}, api);
 })();

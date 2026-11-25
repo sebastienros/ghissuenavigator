@@ -15,6 +15,7 @@
   gap: 8px;
   margin-left: auto;
   font-size: 12px;
+  font-weight: 400;
   line-height: 20px;
   white-space: nowrap;
 }
@@ -78,6 +79,10 @@
 .ghnav-btn--invisible:hover {
   background: var(--ghnav-invisible-hover);
   color: var(--ghnav-fg);
+}
+
+.ghnav-btn--invisible:active {
+  background: var(--button-invisible-bgColor-active, rgba(129, 139, 152, 0.25));
 }
 
 .ghnav-icon {

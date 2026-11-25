@@ -91,6 +91,10 @@ test('treats an empty page beyond the end as the end of the list and keeps the t
   assert.equal(q.totalCount, 8);
   assert.equal(q.totalPages, 2);
   assert.deepEqual(step(q, { page: 2, index: 2 }, 1), { end: true });
+
+  const emptyFirst = addPage(createQueue(LIST), { page: 1, items: [], totalPages: null, totalCount: null });
+  assert.equal(emptyFirst.totalPages, 1);
+  assert.equal(emptyFirst.totalCount, 0);
 });
 
 test('does not infer an impossible page size from a capped last page', () => {

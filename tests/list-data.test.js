@@ -60,6 +60,35 @@ test('keeps only what stepping needs from each item', () => {
   assert.deepEqual(Object.keys(item).sort(), ['key', 'number', 'url']);
 });
 
+test('treats explicit null counts as unknown rather than zero, and checks all embedded scripts', () => {
+  const nullCounts = parseListResponse('{"payload":{"issuesIndexContentRoute":{"pageInfo":{"currentPage":3,"totalPages":null,"totalCount":null}}}}');
+  assert.deepEqual(nullCounts, { items: [], page: 3, totalPages: null, totalCount: null });
+
+  const multiScript = `<!DOCTYPE html><html><body>
+<script type="application/json" data-target="react-app.embeddedData">{"payload":{"otherRoute":{}}}</script>
+<script type="application/json" data-target='react-app.embeddedData'>${JSON.stringify(issuesPayload([11, 10]))}</script>
+</body></html>`;
+  assert.deepEqual(parseListResponse(multiScript).items.map((item) => item.number), [11, 10]);
+});
+
+test('reads mixed issue and pull request items from an issues search', () => {
+  const payload = issuesPayload([12]);
+  payload.payload.issuesIndexContentRoute.results.push({
+    id: 'PR_9',
+    itemType: 'REPO_ISSUES_DASHBOARD_ITEM_TYPE_PULL_REQUEST',
+    pullRequest: {
+      number: 9,
+      title: 'Example PR 9',
+      permalink: 'https://github.com/octo-org/sample-repo/pull/9',
+    },
+  });
+  const page = parseListResponse(JSON.stringify(payload));
+  assert.deepEqual(page.items.map((item) => item.url), [
+    'https://github.com/octo-org/sample-repo/issues/12',
+    'https://github.com/octo-org/sample-repo/pull/9',
+  ]);
+});
+
 test('returns null when the response has no recognisable list', () => {
   assert.equal(parseListResponse('<html><body>Sign in to GitHub</body></html>'), null);
   assert.equal(parseListResponse('{"payload":{}}'), null);

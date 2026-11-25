@@ -3,7 +3,7 @@
 (() => {
   const { parseRoute } = typeof module === 'object' ? require('./routes.js') : globalThis.GhNav;
 
-  const EMBEDDED_DATA = /<script\b[^>]*\bdata-target="react-app\.embeddedData"[^>]*>([\s\S]*?)<\/script>/;
+  const EMBEDDED_DATA = /<script\b[^>]*\bdata-target=["']react-app\.embeddedData["'][^>]*>([\s\S]*?)<\/script>/gi;
 
   // GitHub's list pages keep their results in a "...ContentRoute" object
   // (issuesIndexContentRoute, repoPullsDashboardContentRoute). An empty list
@@ -31,31 +31,33 @@
   }
 
   function toCount(value) {
+    if (typeof value !== 'number' && (typeof value !== 'string' || !value.trim())) return null;
     const n = Number(value);
     return Number.isFinite(n) && n >= 0 ? Math.floor(n) : null;
   }
 
-  function parseDocument(text) {
+  function extractRoute(text) {
     const trimmed = text.trimStart();
     if (trimmed.startsWith('{')) {
       try {
-        return JSON.parse(trimmed);
+        return findResultsRoute(JSON.parse(trimmed).payload);
       } catch {
         return null;
       }
     }
-    const match = text.match(EMBEDDED_DATA);
-    if (!match) return null;
-    try {
-      return JSON.parse(match[1]);
-    } catch {
-      return null;
+    for (const match of text.matchAll(EMBEDDED_DATA)) {
+      try {
+        const route = findResultsRoute(JSON.parse(match[1]).payload);
+        if (route) return route;
+      } catch {
+        // Keep checking any remaining embedded data blocks.
+      }
     }
+    return null;
   }
 
   function parseListResponse(text) {
-    const doc = parseDocument(String(text));
-    const route = doc && findResultsRoute(doc.payload);
+    const route = extractRoute(String(text));
     if (!route) return null;
 
     const info = route.pageInfo || route;

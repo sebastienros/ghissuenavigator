@@ -23,13 +23,18 @@ test('ignores other modifiers, including AltGr, plain keys and text composition'
   assert.equal(keyAction(key('KeyJ')), null);
 });
 
-test('recognises text fields so typing is never intercepted', () => {
-  const el = (props) => ({ getAttribute: (name) => props[name] ?? null, ...props });
+test('recognises text fields and descendants of rich editors so typing is never intercepted', () => {
+  const el = (props) => ({
+    getAttribute: (name) => props[name] ?? null,
+    closest: (selector) => (props.insideEditable && selector.includes('textbox') ? {} : null),
+    ...props,
+  });
   assert.equal(isEditable(el({ tagName: 'TEXTAREA' })), true);
-  assert.equal(isEditable(el({ tagName: 'INPUT', type: 'text' })), true);
+  assert.equal(isEditable(el({ tagName: 'input', type: 'text' })), true);
   assert.equal(isEditable(el({ tagName: 'INPUT', type: 'checkbox' })), false);
   assert.equal(isEditable(el({ tagName: 'DIV', isContentEditable: true })), true);
   assert.equal(isEditable(el({ tagName: 'DIV', role: 'combobox' })), true);
+  assert.equal(isEditable(el({ tagName: 'SPAN', insideEditable: true })), true);
   assert.equal(isEditable(el({ tagName: 'BUTTON' })), false);
   assert.equal(isEditable(null), false);
 });

@@ -33,10 +33,15 @@ test('recognises issue and pull request pages, including pull request tabs', () 
 test('ignores pages that are neither lists nor items', () => {
   for (const href of [
     'https://github.com/octo-org/sample-repo/issues/new',
+    'https://github.com/octo-org/sample-repo/issues/0',
+    'https://github.com/orgs/octo-org/issues',
+    'https://github.com/settings/copilot/issues',
+    'https://github.com/users/octocat/pulls',
     'https://github.com/octo-org/sample-repo',
     'https://github.com/issues',
     'https://gist.github.com/octo-org/sample-repo/issues',
     'http://github.com/octo-org/sample-repo/issues',
+    'javascript:alert(1)',
     'not a url',
   ]) {
     assert.equal(parseRoute(href).kind, 'other', href);
