@@ -1,118 +1,94 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
+  <title>GitHub Issues Navigator</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      --fg: #1f2328;
+      --muted: #59636e;
+      --accent: #0969da;
+      --panel: #f6f8fa;
+      --border: #d1d9e0;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #f0f6fc;
+        --muted: #9198a1;
+        --accent: #4493f8;
+        --panel: #151b23;
+        --border: #3d444d;
+      }
+    }
+
     body {
       width: 300px;
-      padding: 20px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
       margin: 0;
-    }
-    
-    .header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    
-    .logo {
-      font-size: 24px;
-      font-weight: 600;
-      color: #0969da;
-      margin-bottom: 8px;
-    }
-    
-    .subtitle {
-      color: #656d76;
-      font-size: 14px;
-    }
-    
-    .instructions {
-      background: #f6f8fa;
-      border-radius: 6px;
       padding: 16px;
-      margin-bottom: 16px;
-    }
-    
-    .instruction-item {
-      margin-bottom: 12px;
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
       font-size: 13px;
-      line-height: 1.4;
+      line-height: 1.5;
     }
-    
-    .instruction-item:last-child {
-      margin-bottom: 0;
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 16px;
     }
-    
-    .kbd {
-      background: #f3f4f6;
-      border: 1px solid #d1d5db;
-      border-radius: 3px;
-      padding: 2px 6px;
-      font-family: ui-monospace, SFMono-Regular, "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
-      font-size: 11px;
-      font-weight: 600;
+
+    p {
+      margin: 0 0 12px;
+      color: var(--muted);
     }
-    
-    .status {
-      text-align: center;
-      padding: 12px;
-      background: #dbeafe;
+
+    table {
+      width: 100%;
+      margin-bottom: 12px;
+      border-collapse: collapse;
+      background: var(--panel);
       border-radius: 6px;
-      color: #1e40af;
-      font-size: 12px;
     }
-    
-    .github-link {
-      text-align: center;
-      margin-top: 16px;
+
+    th, td {
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
     }
-    
-    .github-link a {
-      color: #0969da;
-      text-decoration: none;
-      font-size: 12px;
+
+    th {
+      font-weight: 400;
+      white-space: nowrap;
     }
-    
-    .github-link a:hover {
-      text-decoration: underline;
+
+    kbd {
+      display: inline-block;
+      padding: 0 5px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font: 600 11px/18px ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+
+    a {
+      color: var(--accent);
     }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">🔍 GitHub Navigator</div>
-    <div class="subtitle">Navigate issues with keyboard shortcuts</div>
-  </div>
-  
-  <div class="instructions">
-    <div class="instruction-item">
-      <strong>Start from First Issue:</strong><br>
-      <kbd>Ctrl</kbd> + <kbd>→</kbd>
-    </div>
-    
-    <div class="instruction-item">
-      <strong>Start from Last Issue:</strong><br>
-      <kbd>Ctrl</kbd> + <kbd>←</kbd>
-    </div>
-    
-    <div class="instruction-item">
-      <strong>Navigate Issues:</strong><br>
-      <kbd>Ctrl</kbd> + <kbd>←</kbd> / <kbd>→</kbd>
-    </div>
-    
-    <div class="instruction-item">
-      <strong>Stop Navigation:</strong><br>
-      <kbd>Esc</kbd>
-    </div>
-  </div>
-  
-  <div class="status">
-    Navigate to any GitHub repository's issues or pull requests page, then press Ctrl+→ to start!
-  </div>
-  
-  <div class="github-link">
-    <a href="https://github.com" target="_blank">Open GitHub</a>
-  </div>
+  <h1>GitHub Issues Navigator</h1>
+  <p>Open an issue or pull request from a repository's issue or pull request list. Previous and Next controls appear under <strong>New issue</strong>.</p>
+
+  <table aria-label="Keyboard shortcuts">
+    <tbody>
+      <tr><th scope="row"><kbd>Alt</kbd>+<kbd>]</kbd></th><td>Next item (on a list: first item)</td></tr>
+      <tr><th scope="row"><kbd>Alt</kbd>+<kbd>[</kbd></th><td>Previous item (on a list: last item)</td></tr>
+      <tr><th scope="row"><kbd>Alt</kbd>+<kbd>↑</kbd></th><td>Back to list</td></tr>
+    </tbody>
+  </table>
+
+  <p><kbd>Alt</kbd>+<kbd>←</kbd> and <kbd>Alt</kbd>+<kbd>→</kbd> also step through a list from an issue or pull request. Everywhere else they stay the browser's Back and Forward.</p>
+
+  <a href="https://github.com" target="_blank" rel="noopener">Open GitHub</a>
 </body>
 </html>

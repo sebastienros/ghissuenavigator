@@ -1,141 +1,131 @@
 # GitHub Issues Navigator
 
-A browser extension that allows you to navigate through GitHub issues and pull requests using keyboard shortcuts, with smooth visual transitions.
+A browser extension that lets you step through the issues and pull requests in any repository's issue or pull request list, one by one, without going back to the list each time.
 
 ## Features
 
-- 🚀 **Quick Navigation**: Start with `Alt+→` (first issue) or `Alt+←` (last issue)
-- ⬅️➡️ **Arrow Key Navigation**: Continue using `Alt+←` and `Alt+→` to move between issues
-- 🎨 **Visual Transitions**: Smooth sliding animations between issues
-- 📊 **Progress Indicator**: Always know your position in the issue list
-- 🔄 **Easy Exit**: Press `Alt+↑` to return to the original page
-- 📱 **Responsive Design**: Works on both desktop and mobile GitHub
-- 🔍 **Smart Filtering**: Works with GitHub's issue filters (labels, state, author, etc.)
-- 📄 **Auto-Pagination**: Automatically loads more issues when reaching the end of current page
-- ⚡ **REST API Powered**: Uses GitHub's Search REST API for reliable and fast issue loading
-- 💾 **State Persistence**: Maintains navigation position across page transitions
+- ⏭️ **Previous and Next controls**: Open an issue or pull request from a list and the controls appear on the row under its title, below **New issue**, with your position (for example, `4 of 13`) and a **Back to list** link
+- 🔒 **Private and internal repositories**: Reads the list through your normal GitHub sign-in, so it works anywhere you can see the list, with no token to set up
+- 🔍 **Any filter**: Follows exactly what the list shows, including labels, state, author, sort order and the page you were on
+- 🔀 **Issues and pull requests**: Works from issue lists and pull request lists, including a pull request's **Commits**, **Checks** and **Files changed** tabs
+- 📄 **Long lists**: Loads more of the list as you reach the end of a page
+- ⌨️ **Keyboard shortcuts**: `Alt+]` and `Alt+[` step forward and back from anywhere on the page
+- 📌 **Stays in reach**: A compact copy of the controls sits in GitHub's header while you scroll
+- 🗂️ **New tabs and history**: Items opened from a list in a new tab get their own controls, and browser Back returns them after a detour
+- 🌗 **Looks like GitHub**: Uses GitHub's own colours, so it follows light, dark and high-contrast themes
+- ♿ **Accessible**: Labelled for screen readers, reachable by keyboard, and announces the start and end of the list
 
-## How to Use
+## How to use
 
-1. **Navigate to a GitHub Issues/PRs page**: 
-   - Go to any repository's issues page (e.g., `https://github.com/dotnet/aspnetcore/issues`)
-   - Or pull requests page (e.g., `https://github.com/dotnet/aspnetcore/pulls`)
-   - Works with filtered pages (e.g., `https://github.com/dotnet/aspnetcore/issues?q=is%3Aissue+state%3Aopen+label%3Aarea-middleware`)
+1. Open a repository's issues or pull requests list, for example
+   `https://github.com/dotnet/aspnetcore/issues?q=is%3Aissue+state%3Aopen+label%3Aarea-middleware`.
+2. Open any item from the list. The controls appear at the right of the row under its title (below **New issue** on an issue).
+3. Select **Next** or **Previous**, or press `Alt+]` and `Alt+[`.
+4. Select **Back to list** or press `Alt+↑` to return to the list, on the page that holds the current item.
 
-2. **Start Navigation**: 
-   - Press `Alt+→` to start from the first issue
-   - Press `Alt+←` to start from the last issue
+You can also start from the list itself: `Alt+]` opens the first item on the page and `Alt+[` opens the last.
 
-3. **Navigate Issues**:
-   - `Alt+→`: Go to next issue (automatically loads more when reaching end of page)
-   - `Alt+←`: Go to previous issue
-   - `Alt+↑`: Stop navigation and return to list
+The controls only appear for items opened from a list, and stay while you step through it. An issue you open from anywhere else, such as a notification or a link, looks exactly as it does without the extension.
 
-4. **Visual Feedback**: 
-   - A blue indicator appears in the top-right showing your progress
-   - Shows current position and total loaded issues (e.g., "5/25 (+more)" when more pages available)
-   - Smooth slide transitions show direction of navigation
-   - Notifications confirm your actions and loading status
+## Keyboard shortcuts
 
-## Keyboard Shortcuts
+| Shortcut             | On a list           | On an issue or pull request |
+|----------------------|---------------------|-----------------------------|
+| `Alt+]`              | Open the first item | Next item                   |
+| `Alt+[`              | Open the last item  | Previous item               |
+| `Alt+→`              |                     | Next item                   |
+| `Alt+←`              |                     | Previous item               |
+| `Alt+↑`              |                     | Back to list                |
 
-| Shortcut | Action |
-|----------|--------|
-| `Alt+→` | Start from first issue / Next issue |
-| `Alt+←` | Start from last issue / Previous issue |
-| `Alt+↑` | Exit navigation mode |
+`Alt+[` and `Alt+]` avoid the browser's own `Alt+←` and `Alt+→` (Back and Forward). The arrow versions still work on an issue or pull request while you are stepping through a list, so Back and Forward behave normally everywhere else. Shortcuts never fire while you are typing in a text box.
 
-## Installation (Development)
+## Installation (development)
 
-### Local Testing
+### Edge or Chrome
 
-1. **Clone/Download the extension files**:
-   ```
-   git clone <repository-url>
-   # or download and extract the ZIP
-   ```
+1. Clone or download this repository.
+2. Open your browser's extensions page (`edge://extensions/` or `chrome://extensions/`).
+3. Turn on **Developer mode**.
+4. Select **Load unpacked** and choose the folder that holds `manifest.json`.
+5. Open a GitHub issues list and open an item from it.
 
-2. **Open Edge Extensions Page**:
-   - Navigate to `edge://extensions/`
+### Firefox
 
-3. **Enable Developer Mode**:
-   - Toggle the "Developer mode" switch in the left sidebar
+1. Clone or download this repository.
+2. Open `about:debugging#/runtime/this-firefox`.
+3. Select **Load Temporary Add-on…** and choose `manifest.json`.
+4. Open a GitHub issues list and open an item from it.
 
-4. **Load the Extension**:
-   - Click "Load unpacked"
-   - Select the folder containing the extension files (`c:\code\ghissuenav`)
+Firefox removes temporary add-ons when it closes, so load it again after restarting.
 
-5. **Test the Extension**:
-   - Go to any GitHub repository's issues page
-   - Try the keyboard shortcuts listed above
+### Browser compatibility
 
-### Browser Compatibility
-
-- ✅ Microsoft Edge (recommended for your setup)
-- ✅ Chrome 
-- ✅ Firefox (may require minor manifest adjustments)
+- ✅ Microsoft Edge
+- ✅ Chrome
+- ✅ Firefox 121 or later
 - ⚠️ Safari (requires conversion to Safari extension format)
 
-## Project Structure
+## Project structure
 
-```
+```text
 github-issues-navigator/
 ├── manifest.json          # Extension configuration
-├── content.js             # Main navigation logic
-├── styles.css             # Visual styles and animations
-├── popup.html             # Extension popup interface
-├── icons/                 # Extension icons
-│   ├── icon16.svg
-│   ├── icon48.svg
-│   └── icon128.svg
-├── .github/
-│   └── copilot-instructions.md
-└── README.md
+├── src/
+│   ├── routes.js          # Recognises list and item URLs
+│   ├── list-data.js       # Reads the list data GitHub's list pages return
+│   ├── queue.js           # Position, next and previous across pages
+│   ├── context.js         # Decides which list an item was opened from
+│   ├── keys.js            # Keyboard shortcuts
+│   ├── controls.js        # The on-page controls
+│   └── main.js            # Wires it together and follows GitHub's page changes
+├── styles.css             # Styles for the controls
+├── popup.html             # Extension popup
+├── icons/
+└── tests/                 # Unit tests (node --test)
 ```
 
-## Technical Details
+## Technical details
 
-### Manifest V3 Features
-- Uses modern `content_scripts` for GitHub integration
-- Minimal permissions (`activeTab`, `scripting`)
-- Host permissions limited to GitHub domains
+- The extension asks GitHub for the same list you are looking at, as JSON (`Accept: application/json`), with your existing session. If GitHub sends the HTML page instead, it reads the list data embedded in that page.
+- Lists of up to four pages are loaded in full when you start, so the order stays stable while you work through them, even if you close items as you go. Longer lists load the neighbouring pages as you move.
+- The controls find the row under the title by its state label (**Open**, **Closed**, **Draft** and so on), which works with both GitHub's current and older page headers. If GitHub's layout changes and that row can't be found, the controls float at the bottom of the page instead.
+- The current list is kept in the tab's `sessionStorage` (issue numbers and URLs only), so each tab can step through a different list. Nothing leaves your browser except requests to `github.com`.
+- The only permission is access to `github.com`. There is no background script.
 
-### Content Script Features
-- Automatically detects issue/PR links on GitHub pages
-- Maintains navigation state during session
-- Handles GitHub's dynamic content loading
-- Provides visual feedback and transitions
+## Known limitations
 
-### Styling Features
-- CSS3 animations for smooth transitions
-- Responsive design for various screen sizes
-- GitHub-compatible color scheme
-- Non-intrusive overlay indicators
+- Only a repository's own issues and pull requests lists (`/owner/repo/issues` and `/owner/repo/pulls`, with any filter) start stepping. Cross-repository views such as `github.com/issues`, search results and project boards don't.
+- GitHub shows at most 40 pages (1,000 items) of a list, so stepping stops there even when the count says more.
+- In lists longer than four pages, the list can change while you step. If others add items, the extension skips anything you've already passed. If items before your position are closed or removed, later items move up onto a page you've already loaded and can be skipped.
+- GitHub can change its page structure at any time. The floating fallback keeps the controls usable, but placement may need an update.
 
 ## Development
 
 ### Prerequisites
-- Modern web browser (Chrome/Edge recommended for testing)
-- Basic knowledge of JavaScript and browser extensions
 
-### Making Changes
-1. Edit the relevant files (`content.js`, `styles.css`, etc.)
-2. Reload the extension in your browser:
-   - Go to extensions page (`chrome://extensions/`)
-   - Click the reload button for "GitHub Issues Navigator"
-3. Test on a GitHub issues page
+- A Chromium-based browser or Firefox
+- Node.js 18 or later to run the tests
 
-### Debugging
-- Use browser DevTools on GitHub pages to debug content script
-- Check the extension popup for any errors
-- Console logs are available in the DevTools console
+### Running tests
+
+```bash
+node --test
+```
+
+The tests use fictional data and need no dependencies.
+
+### Making changes
+
+1. Edit the files in `src/` or `styles.css`.
+2. Reload the extension from the extensions page.
+3. Reload the GitHub page and open an item from a list.
 
 ## Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Test thoroughly on various GitHub pages
+3. Make your changes and run the tests
+4. Try them on a few GitHub lists
 5. Submit a pull request
 
 ## License
@@ -144,27 +134,43 @@ MIT License - feel free to use and modify as needed.
 
 ## Troubleshooting
 
-### Extension Not Working
-- Ensure Developer Mode is enabled
-- Check that the extension is loaded and enabled
-- Refresh the GitHub page after installing/updating
-- Check browser console for any errors
+### The controls don't appear
 
-### Keyboard Shortcuts Not Responding
-- Make sure you're on a GitHub issues or pulls page
-- Ensure the page has finished loading
-- Try clicking somewhere on the page first to focus it
-- Check if another extension is intercepting the shortcuts
+- Open the item from a list. The controls don't appear for items opened from a notification, a search or a link.
+- Reload the GitHub page after installing or updating the extension.
+- Check the browser console for messages starting with `GitHub Issues Navigator`.
 
-### Navigation Indicator Not Showing
-- The indicator appears automatically when on supported GitHub pages
-- Try refreshing the page
-- Check if the extension has proper permissions
+### The controls don't appear on a private list, or you see "Couldn't load this list"
 
-## Future Enhancements
+- Make sure you're signed in to GitHub in this browser and can see the list. For organizations that use single sign-on, open the list once to renew your session.
 
-- [ ] Support for GitHub Enterprise instances
+### Keyboard shortcuts don't respond
+
+- Click somewhere on the page that isn't a text box, then try again.
+- Check whether another extension uses the same shortcut.
+
+## Future enhancements
+
+### Stepping through a list
+
+- [ ] Show the next item's title on hover
+- [ ] Show the list's filter in the controls
+- [ ] Jump to any item in the list
+- [ ] Mark items you've already visited
+
+### Triage
+
+- [ ] Quick triage actions from the controls (label, close, comment)
+
+### More lists
+
+- [ ] Other repository list pages, such as a label's page (`/labels/<name>`)
+- [ ] Cross-repository views: `github.com/issues`, `github.com/pulls` and search results
+- [ ] Project boards and saved views
+- [ ] GitHub Enterprise Server instances
+
+### Settings and distribution
+
 - [ ] Customizable keyboard shortcuts
-- [ ] Bookmarking specific issues during navigation
-- [ ] Integration with GitHub notifications
-- [ ] Support for other code hosting platforms
+- [ ] Publish to the Edge Add-ons, Chrome Web Store and Firefox Add-ons stores
+- [ ] Safari version
