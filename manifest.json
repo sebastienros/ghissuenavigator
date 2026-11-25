@@ -1,26 +1,27 @@
 {
   "manifest_version": 3,
   "name": "GitHub Issues Navigator",
-  "version": "1.0.0",
-  "description": "Navigate through GitHub issues and pull requests with keyboard shortcuts",
-  "permissions": [
-    "activeTab",
-    "scripting"
-  ],
+  "version": "1.1.0",
+  "description": "Step through the issues and pull requests in a repository's issue or pull request list, with Previous and Next controls and keyboard shortcuts",
   "host_permissions": [
-    "https://github.com/*",
-    "https://api.github.com/*"
+    "https://github.com/*"
   ],
   "content_scripts": [
     {
       "matches": [
-        "https://github.com/*/issues*",
-        "https://github.com/*/pulls*",
-        "https://github.com/*/pull/*"
+        "https://github.com/*"
       ],
-      "js": ["content.js"],
+      "js": [
+        "src/routes.js",
+        "src/list-data.js",
+        "src/queue.js",
+        "src/context.js",
+        "src/keys.js",
+        "src/controls.js",
+        "src/main.js"
+      ],
       "css": ["styles.css"],
-      "run_at": "document_end"
+      "run_at": "document_idle"
     }
   ],
   "action": {

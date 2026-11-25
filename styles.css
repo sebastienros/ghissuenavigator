@@ -1,156 +1,154 @@
-/* GitHub Issues Navigator Styles */
+/* GitHub Issues Navigator: controls that follow GitHub's own theme tokens. */
 
-#github-nav-indicator {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  background: #0969da;
-  color: white;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-  font-size: 12px;
-  box-shadow: 0 8px 24px rgba(9, 105, 218, 0.12);
-  z-index: 10000;
-  opacity: 0.7;
-  transition: all 0.3s ease;
-  max-width: 300px;
-}
+.ghnav-bar {
+  --ghnav-fg: var(--fgColor-default, #1f2328);
+  --ghnav-muted: var(--fgColor-muted, #59636e);
+  --ghnav-btn-bg: var(--button-default-bgColor-rest, #f6f8fa);
+  --ghnav-btn-bg-hover: var(--button-default-bgColor-hover, #eff2f5);
+  --ghnav-btn-bg-active: var(--button-default-bgColor-active, #e6eaef);
+  --ghnav-btn-border: var(--button-default-borderColor-rest, var(--borderColor-default, #d1d9e0));
+  --ghnav-invisible-hover: var(--button-invisible-bgColor-hover, rgba(129, 139, 152, 0.15));
+  --ghnav-focus: var(--focus-outlineColor, #0969da);
 
-#github-nav-indicator:hover {
-  opacity: 1;
-}
-
-#github-nav-indicator.active {
-  background: #28a745;
-  opacity: 1;
-  transform: scale(1.02);
-}
-
-.nav-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-}
-
-.nav-title {
-  font-weight: 600;
-  font-size: 13px;
-}
-
-.nav-status {
-  font-size: 11px;
-  opacity: 0.9;
-}
-
-.nav-counter {
-  font-weight: 600;
-  font-size: 12px;
-  color: #f0f6ff;
-}
-
-.nav-close {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  color: white;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
   display: flex;
   align-items: center;
-  justify-content: center;
-  line-height: 1;
-  transition: all 0.2s ease;
+  gap: 8px;
+  margin-left: auto;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
 }
 
-.nav-close:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.1);
+/* Let the row under the title wrap the controls onto their own line when narrow. */
+:not(body):has(> .ghnav-bar--primary:not(.ghnav-floating)) {
+  flex-wrap: wrap;
+  row-gap: 8px;
 }
 
-#github-nav-notification {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1f2328;
-  color: #f0f6ff;
-  padding: 12px 20px;
+.ghnav-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ghnav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--ghnav-btn-border);
   border-radius: 6px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  box-shadow: 0 8px 24px rgba(31, 35, 40, 0.4);
-  z-index: 10001;
-  animation: slideUp 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
-  max-width: 400px;
+  background: var(--ghnav-btn-bg);
+  color: var(--ghnav-fg);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ghnav-btn:hover {
+  background: var(--ghnav-btn-bg-hover);
+  color: var(--ghnav-fg);
+  text-decoration: none;
+}
+
+.ghnav-btn:active {
+  background: var(--ghnav-btn-bg-active);
+}
+
+.ghnav-btn:focus-visible {
+  outline: 2px solid var(--ghnav-focus);
+  outline-offset: -2px;
+}
+
+.ghnav-btn[aria-disabled='true'] {
+  color: var(--ghnav-muted);
+  background: transparent;
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ghnav-btn--invisible {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ghnav-muted);
+}
+
+.ghnav-btn--invisible:hover {
+  background: var(--ghnav-invisible-hover);
+  color: var(--ghnav-fg);
+}
+
+.ghnav-icon {
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ghnav-pos {
+  min-width: 4.5em;
+  color: var(--ghnav-muted);
+  font-variant-numeric: tabular-nums;
   text-align: center;
 }
 
-/* Simple fade transition effect */
-.nav-transition {
+.ghnav-bar--compact .ghnav-btn {
+  height: 24px;
+  padding: 0 4px;
+}
+
+.ghnav-bar--compact .ghnav-pos {
+  min-width: 3em;
+}
+
+.ghnav-floating {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.1);
-  z-index: 9999;
+  z-index: 100;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 8px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  border-radius: 12px;
+  background: var(--bgColor-default, #ffffff);
+  box-shadow: var(--shadow-floating-large, 0 8px 24px rgba(37, 41, 46, 0.2));
+}
+
+#ghnav-toast {
+  position: fixed;
+  z-index: 101;
+  bottom: 72px;
+  left: 50%;
+  max-width: min(400px, calc(100vw - 32px));
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: var(--bgColor-emphasis, #25292e);
+  color: var(--fgColor-onEmphasis, #ffffff);
+  font-size: 14px;
+  text-align: center;
   opacity: 0;
-  transition: opacity 0.2s ease;
   pointer-events: none;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
-/* Animations */
-@keyframes slideUp {
-  from {
-    transform: translateX(-50%) translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(-50%) translateY(0);
-    opacity: 1;
-  }
+#ghnav-toast.ghnav-toast--visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-/* Enhance issue links during navigation */
-.github-nav-active .js-issue-row:hover {
-  background-color: #f6f8fa;
-  transition: background-color 0.2s ease;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  #github-nav-indicator {
-    top: 10px;
-    right: 10px;
-    left: 10px;
-    max-width: none;
+  .ghnav-bar--compact {
+    display: none;
   }
-  
-  .nav-content {
-    text-align: center;
-  }
-  
-  #github-nav-notification {
-    left: 10px;
-    right: 10px;
-    transform: none;
-    max-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ghnav-toast {
+    transition: none;
   }
 }
